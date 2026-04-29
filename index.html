@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação de Matrícula - PUC Minas</title>
+    <style>
+        :root {
+            --primary-color: #004d80; /* Cor característica padrão de instituições acadêmicas */
+            --background-color: #f4f4f9;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header img {
+            display: block;
+            margin: 0 auto 15px;
+            max-width: 180px;
+            height: auto;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-top: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .validation-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            display: none; /* Oculto até a validação ser concluída */
+        }
+
+        .status-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .status-active .status-icon {
+            background-color: var(--success-color);
+        }
+
+        .status-inactive .status-icon {
+            background-color: var(--error-color);
+        }
+
+        .status-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .student-photo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .student-photo img {
+            width: 120px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .student-photo span {
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .status-active .status-text {
+            color: var(--success-color);
+        }
+
+        .status-inactive .status-text {
+            color: var(--error-color);
+        }
+
+        .student-info {
+            text-align: left;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .info-group {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #888;
+            text-align: center;
+        }
+
+        .btn-nova-consulta {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-nova-consulta:hover {
+            background-color: #600000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="img/brasao-pucminas-versao-2025.png" alt="Logo PUC Minas">
+        <h1>Sistema de Validação</h1>
+        <p>Autenticação de Matrícula Acadêmica</p>
+    </div>
+
+    <div id="loadingScreen" class="loading">
+        <div class="spinner"></div>
+        <p>Verificando credenciais no sistema...</p>
+    </div>
+
+    <div id="validationCard" class="validation-card">
+        
+        <div id="statusIcon" class="status-icon">
+            </div>
+        
+        <div id="statusText" class="status-text">
+            </div>
+
+        <div class="student-photo" id="studentPhotoContainer">
+            <img id="studentPhoto" src="img/jade.jpeg" alt="Foto do Aluno">
+            <span>Foto do estudante</span>
+        </div>
+
+        <div class="student-info" id="studentInfoContainer">
+            <div class="info-group">
+                <div class="info-label">Nome do Aluno</div>
+                <div class="info-value" id="studentName">-</div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">CPF</div>
+                <div class="info-value" id="studentCpf">-</div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">Número de Matrícula</div>
+                <div class="info-value" id="studentId">-</div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">Curso</div>
+                <div class="info-value" id="studentCourse">-</div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">Situação</div>
+                <div class="info-value" id="studentStatus">-</div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">Data e Hora da Consulta</div>
+                <div class="info-value" id="queryTimestamp">-</div>
+            </div>
+        </div>
+
+        <button class="btn-nova-consulta" onclick="window.location.reload()">Realizar Nova Consulta</button>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2026 - PUC Minas</p>
+        <p>Documento digital verificado eletronicamente.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Extração de parâmetros da URL.
+            // O QR Code deve direcionar para uma URL como: site.com/validar?matricula=123456
+            const urlParams = new URLSearchParams(window.location.search);
+            // const matriculaParam = urlParams.get('matricula');
+            const matriculaParam = 1432336;
+
+            // 2. Simulação de requisição ao Backend (Substituir por chamada real - ex: fetch para API Spring Boot)
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                const validationCard = document.getElementById('validationCard');
+                
+                loadingScreen.style.display = 'none';
+                validationCard.style.display = 'block';
+
+                if (!matriculaParam) {
+                    renderError("QR Code inválido ou parâmetro de matrícula ausente.");
+                    return;
+                }
+
+                // Mock de banco de dados para a validação do projeto
+                const mockDatabase = {
+                    "1432336": {
+                        nome: "Jade Garcia de Lima Pinto",
+                        curso: "Sistemas de Informação - EAD",
+                        cpf: "142.767.607-04",
+                        status: "Matriculado",
+                        ativo: true
+                    },
+                    "000000": {
+                        nome: "Usuário Teste",
+                        curso: "Engenharia de Software",
+                        status: "Trancado",
+                        ativo: false
+                    }
+                };
+
+                const aluno = mockDatabase[matriculaParam];
+
+                if (aluno) {
+                    renderResult(matriculaParam, aluno);
+                } else {
+                    renderError("Registro de matrícula não encontrado no sistema.");
+                }
+
+            }, 1500); // Simula 1.5 segundos de latência da rede/servidor
+        });
+
+        function renderResult(matricula, dadosAluno) {
+            const card = document.getElementById('validationCard');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusText');
+
+            document.getElementById('studentName').textContent = dadosAluno.nome;
+            document.getElementById('studentCpf').textContent = dadosAluno.cpf;
+            document.getElementById('studentId').textContent = matricula;
+            document.getElementById('studentCourse').textContent = dadosAluno.curso;
+            document.getElementById('studentStatus').textContent = dadosAluno.status;
+            document.getElementById('queryTimestamp').textContent = new Date().toLocaleString('pt-BR');
+            // document.getElementById('studentPhoto').src = dadosAluno.foto || 'https://via.placeholder.com/120x150?text=Foto';
+            document.getElementById('studentPhoto').alt = `Foto de ${dadosAluno.nome}`;
+
+            if (dadosAluno.ativo) {
+                card.classList.add('status-active');
+                icon.innerHTML = '&#10003;'; // Check mark
+                text.textContent = 'MATRÍCULA ATIVA';
+            } else {
+                card.classList.add('status-inactive');
+                icon.innerHTML = '&#10005;'; // X mark
+                text.textContent = 'MATRÍCULA INATIVA';
+            }
+        }
+
+        function renderError(mensagem) {
+            const card = document.getElementById('validationCard');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusText');
+            
+            card.classList.add('status-inactive');
+            icon.innerHTML = '&#10005;';
+            text.textContent = 'ERRO NA VALIDAÇÃO';
+            
+            // Oculta os dados do aluno em caso de erro
+            document.getElementById('studentInfoContainer').innerHTML = `
+                <div style="margin-top: 20px; color: #666;">
+                    ${mensagem}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
